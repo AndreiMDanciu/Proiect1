@@ -251,7 +251,7 @@ while True:
         utilizator = biblioteca.utilizatori.get(id_utilizator)
 
         for carte in biblioteca.lista_carti:
-            if carte.titlu == titlu_carte:
+            if carte.titlu.lower() == titlu_carte.lower():
                 carte_de_imprumutat = carte
 
         if utilizator and carte_de_imprumutat:
