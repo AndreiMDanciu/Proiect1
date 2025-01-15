@@ -19,7 +19,7 @@ class Biblioteca:
         print(f"Utilizatorul '{utilizator.nume}' a fost adaugat in biblioteca.")
 
     @afisare
-    def imprumuta_carte(self, carte, utilizator):
+    def imprumuta_carte(self, carte):
         if carte in self.lista_carti and carte.disponibila:
             carte.disponibila = False
             return True
