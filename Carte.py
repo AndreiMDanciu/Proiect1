@@ -18,4 +18,4 @@ class Carte:
         return self.rating_total
 
     def __str__(self):
-        return f"{carte.id_carte} - '{carte.titlu}' de {carte.autor}, an publicatie: {carte.an_publicatie}, rating: {carte.rating_total}"
+        return f"{self.id_carte} - '{self.titlu}' de {self.autor}, an publicatie: {self.an_publicatie}, rating: {self.rating_total}"

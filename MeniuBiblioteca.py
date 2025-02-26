@@ -4,17 +4,29 @@ from Biblioteca import Biblioteca
 from Carte import Carte
 from Autor import Autor
 from Utilizator import Utilizator
+from create_carte import *
+from create_utilizator import *
+from create_autor import *
+from sqlalchemy.orm import sessionmaker
+
+Session = sessionmaker()
+Session.configure(bind=engine)
+session = Session()
 
 
-carte1 = Carte(1,"Baltagul", "Mihail Sadoveanu", "Romane", 1866)
-carte2 = Carte(2,"1984", "George Orwell", "Romane", 1949)
-carte3 = Carte(3,"Poezii", "Mihai Eminescu", "Poezii", 1934)
+# carte1 = Carte(1,"Baltagul", "Mihail Sadoveanu", "Romane", 1866)
+# carte2 = Carte(2,"1984", "George Orwell", "Romane", 1949)
+# carte3 = Carte(3,"Poezii", "Mihai Eminescu", "Poezii", 1934)
 
 biblioteca = Biblioteca()
-biblioteca.adauga_carte(carte1)
-biblioteca.adauga_carte(carte2)
-biblioteca.adauga_carte(carte3)
+# biblioteca.adauga_carte(carte1)
+# biblioteca.adauga_carte(carte2)
+# biblioteca.adauga_carte(carte3)
 def meniuBiblioteca():
+    utilizatori = session.query(UtilizatorBaza).all()
+    for utilizator in utilizatori:
+        utilizator.carti_imprumutate = 0
+        session.commit()
 
     while True:
         print("\n--- Meniu Biblioteca ---")
@@ -47,7 +59,8 @@ def meniuBiblioteca():
             categorie = input("Categorie: ")
             an_publicatie = int(input("An publicatie: "))
 
-            autor = Autor(id_carte, nume_autor)
+            autor = Autor(nume=nume_autor)
+            session.commit()
             carte = Carte(id_carte, titlu, nume_autor, categorie, an_publicatie)
             biblioteca.adauga_carte(carte)
 
@@ -60,28 +73,40 @@ def meniuBiblioteca():
         elif optiune == "4": # Imprumuta carte
             id_utilizator = int(input("ID Utilizator: "))
             titlu_carte = input("Titlu carte: ")
-            utilizator = biblioteca.utilizatori.get(id_utilizator)
+            utilizatori = session.query(UtilizatorBaza).all()
+            carti = session.query(CarteBaza).all()
+            for element in utilizatori:
+                if element.id == id_utilizator:
+                    utilizator_actual = element
+            print(utilizator_actual)
 
-            for carte in biblioteca.lista_carti:
+            for carte in carti:
                 if carte.titlu.lower() == titlu_carte.lower():
                     carte_de_imprumutat = carte
 
-            if utilizator and carte_de_imprumutat:
-                utilizator.imprumuta_carte(carte_de_imprumutat, biblioteca)
+            if utilizator_actual and carte_de_imprumutat:
+                utilizator_actual.imprumuta_carte(carte_de_imprumutat, biblioteca)
+                session.commit()
             else:
                 print("Utilizator sau carte inexistenta!")
 
         elif optiune == "5":  # Returnează carte
             id_utilizator = int(input("ID Utilizator: "))
             titlu_carte = input("Titlu carte: ")
-            utilizator = biblioteca.utilizatori.get(id_utilizator)
+            utilizatori = session.query(UtilizatorBaza).all()
+            carti = session.query(CarteBaza).all()
+            for element in utilizatori:
+                if element.id == id_utilizator:
+                    utilizator_actual = element
 
-            for carte in utilizator.carti_imprumutate:
-                if carte.titlu.lower() == titlu_carte.lower():
-                    carte_de_returnat = carte
+            if titlu_carte in utilizator_actual.carti_imprumutate:
+                for carte in carti:
+                    if carte.titlu.lower() == titlu_carte.lower():
+                        carte_de_returnat = carte
 
-            if utilizator and carte_de_returnat:
-                utilizator.returneaza_carte(carte_de_returnat, biblioteca)
+            if utilizator_actual and carte_de_returnat:
+                utilizator_actual.returneaza_carte(carte_de_returnat, biblioteca)
+                session.commit()
             else:
                 print("Utilizator sau carte inexistenta!")
 
@@ -91,9 +116,10 @@ def meniuBiblioteca():
             if rating < 1 or rating > 5:
                 print("Rating invalid! Introduceti un rating valid (1-5)!")
                 continue
+            carti = session.query(CarteBaza).all()
 
             carte_cu_rating = None
-            for carte in biblioteca.lista_carti:
+            for carte in carti:
                 if carte.titlu.lower() == titlu_carte.lower():
                     carte_cu_rating = carte
                     break
@@ -101,13 +127,16 @@ def meniuBiblioteca():
             if carte_cu_rating:
                 carte_cu_rating.adauga_rating(rating)
                 print(f"Rating-ul {rating} a fost adaugat pentru cartea {carte_cu_rating.titlu} de {carte_cu_rating.autor}")
-                print(f"Ratingul cartii '{carte_cu_rating.titlu}' este {carte_cu_rating.rating_total}")
+                # carte_cu_rating.rating = carte_cu_rating.adauga_rating(rating)
+                session.commit()
+                print(f"Ratingul cartii '{carte_cu_rating.titlu}' este {carte_cu_rating.rating}")
             else:
                 print("Cartea nu a fost gasita sau rating invalid!")
 
         elif optiune == "7": # Cauta carti
             criteriu = input("Introduceti criteriul(autor, categorie, an, rating): ")
             valoare = input("Introduceti valoarea(nume, categorie, an, rating): ")
+            print(valoare)
             rezultat = biblioteca.cauta_carte(criteriu, valoare)
             if rezultat:
                 for carte in rezultat:
@@ -151,7 +180,7 @@ def meniuBiblioteca():
             if not carti_populare:
                 print("Nicio carte cu rating mai mare de 4!")
             for carte in carti_populare:
-                print(f"Carte {carte.titlu} are rating-ul {carte.rating_total}")
+                print(f"Carte {carte.titlu} are rating-ul {carte.rating}")
 
         elif optiune == "13": # Sorteaza carti
             criteriu = input("Introduceti criteriul de sortare: ")
